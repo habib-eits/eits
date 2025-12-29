@@ -1,0 +1,111 @@
+--for inclusive and exclusive  tax=
+
+ALTER TABLE `invoice_master` ADD `TaxType` VARCHAR(55) NULL AFTER `Subject`;
+
+ALTER TABLE `invoice_detail` 
+
+ADD `Discount` DOUBLE(8,2)   NULL AFTER `Tax`, 
+ADD `DiscountType` DOUBLE(8,2)   NULL AFTER `Discount`, 
+ADD `Gross` DOUBLE(8,2)   NULL AFTER `DiscountType`;
+
+ 
+ALTER TABLE `invoice_detail` ADD `DiscountAmountItem` DOUBLE(10,2) NULL DEFAULT NULL;
+
+ 
+
+
+CREATE or replace VIEW `v_invoice_master` AS select `invoice_master`.`InvoiceMasterID` AS `InvoiceMasterID`,`invoice_master`.`Date` AS `Date`,`invoice_master`.`UserID` AS `UserID`,`invoice_master`.`PaymentMode` AS `PaymentMode`,`invoice_master`.`Total` AS `Total`,`invoice_master`.`Paid` AS `Paid`,`invoice_master`.`GrandTotal` - `invoice_master`.`Paid` AS `Balance`,`invoice_master`.`DueDate` AS `DueDate`,`party`.`PartyName` AS `PartyName`,`party`.`Address` AS `Address`,`party`.`Phone` AS `Phone`,`party`.`Email` AS `Email`,`invoice_master`.`InvoiceNo` AS `InvoiceNo`,`invoice_master`.`CustomerNotes` AS `CustomerNotes`,`invoice_master`.`Subject` AS `Subject`,`invoice_master`.`ReferenceNo` AS `ReferenceNo`,`invoice_master`.`SupplierID` AS `SupplierID`,`invoice_master`.`PartyID` AS `PartyID`,`invoice_master`.`SubTotal` AS `SubTotal`,`invoice_master`.`DiscountPer` AS `DiscountPer`,`invoice_master`.`DiscountAmount` AS `DiscountAmount`,`invoice_master`.`InvoiceType` AS `InvoiceType`,`invoice_master`.`WalkinCustomerName` AS `WalkinCustomerName`,`invoice_master`.`DescriptionNotes` AS `DescriptionNotes`,`invoice_master`.`TaxPer` AS `TaxPer`,`invoice_master`.`Tax` AS `Tax`,`invoice_master`.`Shipping` AS `Shipping`,`invoice_master`.`GrandTotal` AS `GrandTotal`,`party`.`Mobile` AS `Mobile`,`party`.`TRN` AS `TRN`,`party`.`Website` AS `Website`,`party`.`Active` AS `Active`,`party`.`InvoiceDueDays` AS `InvoiceDueDays`,`party`.`eDate` AS `eDate`,`invoice_master`.`PaymentDetails` AS `PaymentDetails`,`user`.`FullName` AS `FullName`,`invoice_master`.`TaxType` AS `TaxType` from ((`invoice_master` join `party` on(`invoice_master`.`PartyID` = `party`.`PartyID`)) left join `user` on(`invoice_master`.`UserID` = `user`.`UserID`)) order by `invoice_master`.`InvoiceMasterID`;
+
+
+ALTER TABLE `estimate_master` ADD `TaxType` VARCHAR(25) NULL AFTER `Tax`;
+
+ALTER TABLE `estimate_detail` 
+
+ADD `Discount` DOUBLE(8,2)   NULL AFTER `Tax`, 
+ADD `DiscountType` DOUBLE(8,2)   NULL AFTER `Discount`, 
+ADD `Gross` DOUBLE(8,2)   NULL AFTER `DiscountType`;
+
+ALTER TABLE `estimate_detail` ADD `DiscountAmountItem` DOUBLE(10,2) NULL DEFAULT NULL;
+
+
+
+
+
+
+ $invoice_mst = array(
+              'InvoiceNo' => $request->InvoiceNo, 
+              'InvoiceType' => $request->InvoiceType, 
+              'Date' => $request->Date, 
+              'DueDate' => $request->DueDate, 
+              'PartyID' => $request->PartyID, 
+              'WalkinCustomerName' => $request->WalkinCustomerName, 
+              'ReferenceNo' => $request->ReferenceNo, 
+              'PaymentMode' => $request->PaymentMode, 
+              'PaymentDetails' => $request->PaymentDetails, 
+              'Subject' => $request->Subject, 
+              'SubTotal' => $request->SubTotal, 
+              'DiscountPer' => $request->DiscountPer, 
+              'DiscountAmount' => $request->DiscountAmount, 
+              'Total' => $request->Total, 
+              'TaxPer' => $request->Taxpercentage, 
+              'Tax' => $request->grandtotaltax, 
+              'TaxType' => $request->TaxType, 
+              'Shipping' => $request->Shipping, 
+              'GrandTotal' => $request->Grandtotal, 
+              'Paid' => $request->amountPaid, 
+              'Balance' => $request->amountDue, 
+              'CustomerNotes' => $request->CustomerNotes,               
+              'DescriptionNotes' => $request->DescriptionNotes,               
+              'UserID' => session::get('UserID'), 
+      );
+
+
+        $invoice_det = array (
+        'InvoiceMasterID' => $request->InvoiceMasterID, 
+        'InvoiceNo' => $request->InvoiceNo, 
+         'ItemID' => $request->ItemID[$i],
+         'PartyID' => $request->input('PartyID'), 
+        'Qty' => $request->Qty[$i],
+        'Rate' => $request->Price[$i],
+        'Description' => $request->Description[$i],
+         'TaxPer' => $request->Tax[$i],
+         'Tax' => $request->TaxVal[$i],
+        'Total' => $request->ItemTotal[$i],
+        'Discount' => $request->Discount[$i],
+        'DiscountType' => $request->DiscountType[$i],
+        'Gross' => $request->Gross[$i],
+        'DiscountAmountItem' => $request->DiscountAmountItem[$i],
+        
+    );
+
+
+
+21-11-2022
+CREATE  or replace VIEW `v_voucher_master` AS select `voucher_master`.`VoucherMstID` AS `VoucherMstID`,`voucher_master`.`VoucherCodeID` AS `VoucherCodeID`,`voucher_master`.`Voucher` AS `Voucher`,`voucher_master`.`Date` AS `Date`,`voucher_master`.`Narration` AS `Narration`,`voucher_type`.`VoucherTypeID` AS `VoucherTypeID`,`voucher_type`.`VoucherCode` AS `VoucherCode`,`voucher_type`.`VoucherTypeName` AS `VoucherTypeName`,`voucher_detail`.`PartyID` AS `PartyID`,`party`.`PartyName` AS `PartyName`,`voucher_detail`.`Debit` AS `Debit`,`voucher_detail`.`Credit` AS `Credit`,`supplier`.`SupplierID` AS `SupplierID`,`supplier`.`SupplierName` AS `SupplierName` from ((((`voucher_master` join `voucher_type` on(`voucher_master`.`VoucherCodeID` = `voucher_type`.`VoucherTypeID`)) join `voucher_detail` on(`voucher_master`.`VoucherMstID` = `voucher_detail`.`VoucherMstID`)) left join `party` on(`voucher_detail`.`PartyID` = `party`.`PartyID`)) left join `supplier` on(`voucher_detail`.`SupplierID` = `supplier`.`SupplierID`));
+
+
+
+CREATE or replace VIEW `v_invoice_master` AS select `invoice_master`.`InvoiceMasterID` AS `InvoiceMasterID`,`invoice_master`.`Date` AS `Date`,`invoice_master`.`UserID` AS `UserID`,`invoice_master`.`PaymentMode` AS `PaymentMode`,`invoice_master`.`Total` AS `Total`,`invoice_master`.`Paid` AS `Paid`,`invoice_master`.`Total` - `invoice_master`.`Paid` AS `Balance`,`invoice_master`.`DueDate` AS `DueDate`,`party`.`PartyName` AS `PartyName`,`party`.`Address` AS `Address`,`party`.`Phone` AS `Phone`,`party`.`Email` AS `Email`,`invoice_master`.`InvoiceNo` AS `InvoiceNo`,`invoice_master`.`CustomerNotes` AS `CustomerNotes`,`invoice_master`.`Subject` AS `Subject`,`invoice_master`.`ReferenceNo` AS `ReferenceNo`,`invoice_master`.`SupplierID` AS `SupplierID`,`invoice_master`.`PartyID` AS `PartyID`,`invoice_master`.`SubTotal` AS `SubTotal`,`invoice_master`.`DiscountPer` AS `DiscountPer`,`invoice_master`.`DiscountAmount` AS `DiscountAmount`,`invoice_master`.`InvoiceType` AS `InvoiceType`,`invoice_master`.`WalkinCustomerName` AS `WalkinCustomerName`,`invoice_master`.`DescriptionNotes` AS `DescriptionNotes`,`invoice_master`.`TaxPer` AS `TaxPer`,`invoice_master`.`Tax` AS `Tax`,`invoice_master`.`Shipping` AS `Shipping`,`invoice_master`.`GrandTotal` AS `GrandTotal`,`party`.`Mobile` AS `Mobile`,`party`.`TRN` AS `TRN`,`party`.`Website` AS `Website`,`party`.`Active` AS `Active`,`party`.`InvoiceDueDays` AS `InvoiceDueDays`,`party`.`eDate` AS `eDate`,`invoice_master`.`PaymentDetails` AS `PaymentDetails`,`user`.`FullName` AS `FullName`,`invoice_master`.`TaxType` AS `TaxType` from ((`invoice_master` join `party` on(`invoice_master`.`PartyID` = `party`.`PartyID`)) left join `user` on(`invoice_master`.`UserID` = `user`.`UserID`)) order by `invoice_master`.`InvoiceMasterID`;
+
+
+30-11-2022
+
+CREATE or replace VIEW `v_party_aging` AS select `invoice_master`.`PartyID` AS `PartyID`,sum(if(to_days(curdate()) - to_days(`invoice_master`.`Date`) between 1 and 7,`invoice_master`.`GrandTotal`,0)) AS `age7Days`,sum(if(to_days(curdate()) - to_days(`invoice_master`.`Date`) between 8 and 16,`invoice_master`.`GrandTotal`,0)) AS `age15Days`,sum(if(to_days(curdate()) - to_days(`invoice_master`.`Date`) between 17 and 30,`invoice_master`.`GrandTotal`,0)) AS `age30Days`,sum(if(to_days(curdate()) - to_days(`invoice_master`.`Date`) between 31 and 60,`invoice_master`.`GrandTotal`,0)) AS `age60Days`,sum(if(to_days(curdate()) - to_days(`invoice_master`.`Date`) between 61 and 90,`invoice_master`.`GrandTotal`,0)) AS `age90Days`,sum(if(to_days(curdate()) - to_days(`invoice_master`.`Date`) > 90,`invoice_master`.`GrandTotal`,0)) AS `age90plusDays`,sum(if(to_days(curdate()) - to_days(`invoice_master`.`Date`) > 0,`invoice_master`.`GrandTotal`,0)) AS `Total`,`party`.`PartyName` AS `PartyName` from (`invoice_master` join `party` on(`invoice_master`.`PartyID` = `party`.`PartyID`)) where `invoice_master`.`Paid` = 0 group by `invoice_master`.`PartyID`,`party`.`PartyName`;
+
+
+08/12/2022
+
+ALTER TABLE `party` ADD `City` VARCHAR(175) NULL AFTER `Address`;
+
+CREATE or replace VIEW `v_inv_detail` AS select `invoice_detail`.`InvoiceMasterID` AS `InvoiceMasterID`,`invoice_detail`.`InvoiceNo` AS `InvoiceNo`,`invoice_detail`.`ItemID` AS `ItemID`,`invoice_detail`.`SupplierID` AS `SupplierID`,`invoice_detail`.`Qty` AS `Qty`,`invoice_detail`.`Rate` AS `Rate`,`item`.`ItemName` AS `ItemName`,`invoice_detail`.`Gross` AS `Gross`,`invoice_detail`.`Total` AS `Total` from (`invoice_detail` join `item` on(`invoice_detail`.`ItemID` = `item`.`ItemID`))
+
+
+
+
+CREATE or replace VIEW `v_inventory`  AS SELECT `invoice_detail`.`ItemID` AS `ItemID`, `item`.`ItemName` AS `ItemName`, `item`.`UnitName` AS `UnitName`, sum(if(left(`invoice_detail`.`InvoiceNo`,2) = 'CN',`invoice_detail`.`Qty`,0)) AS `SaleReturn`, sum(if(left(`invoice_detail`.`InvoiceNo`,3) = 'BIL',`invoice_detail`.`Qty`,0)) AS `QtyIn`, sum(if(left(`invoice_detail`.`InvoiceNo`,3) = 'TAX',`invoice_detail`.`Qty`,0)) AS `QtyOut`, sum(if(left(`invoice_detail`.`InvoiceNo`,3) = 'BIL',`invoice_detail`.`Qty`,0) + if(left(`invoice_detail`.`InvoiceNo`,2) = 'CN',`invoice_detail`.`Qty`,0)) - sum(if(left(`invoice_detail`.`InvoiceNo`,3) = 'TAX',`invoice_detail`.`Qty`,0)) AS `Balance` FROM (`invoice_detail` join `item` on(`invoice_detail`.`ItemID` = `item`.`ItemID`)) GROUP BY `invoice_detail`.`ItemID`, `item`.`ItemName`, `item`.`UnitName` ;
+
+-- --------------------------------------------------------
+
+
+
+CREATE or replace VIEW `v_inventory_detail`  AS SELECT `invoice_detail`.`ItemID` AS `ItemID`, `item`.`ItemName` AS `ItemName`, `item`.`UnitName` AS `UnitName`, if(left(`invoice_detail`.`InvoiceNo`,2) = 'CN',`invoice_detail`.`Qty`,0) AS `SaleReturn`, if(left(`invoice_detail`.`InvoiceNo`,3) = 'BIL',`invoice_detail`.`Qty`,0) AS `QtyIn`, if(left(`invoice_detail`.`InvoiceNo`,3) = 'TAX',`invoice_detail`.`Qty`,0) AS `QtyOut`, `invoice_master`.`Date` AS `Date`, `invoice_detail`.`InvoiceNo` AS `InvoiceNo` FROM ((`invoice_detail` join `item` on(`invoice_detail`.`ItemID` = `item`.`ItemID`)) join `invoice_master` on(`invoice_master`.`InvoiceMasterID` = `invoice_detail`.`InvoiceMasterID`))  ;

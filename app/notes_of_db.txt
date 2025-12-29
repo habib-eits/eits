@@ -1,0 +1,16 @@
+Date: 07/09/2024
+
+ALTER TABLE `estimate_detail` ADD `unit_net_cost` DECIMAL(15,2) NULL AFTER `DiscountAmountItem`, ADD `vat_per_unit` DECIMAL(15,2) NULL AFTER `unit_net_cost`, ADD `unit_with_vat` DECIMAL(15,2) NULL AFTER `vat_per_unit`, ADD `per_unit_profit_margin` DECIMAL(15,2) NULL AFTER `unit_with_vat`, ADD `per_unit_selling_price` DECIMAL(15,2) NULL AFTER `per_unit_profit_margin`, ADD `quantity` DECIMAL(15,2) NULL AFTER `per_unit_selling_price`, ADD `total_cost_with_vat` DECIMAL(15,2) NULL AFTER `quantity`, ADD `total_profit_margin` DECIMAL(15,2) NULL AFTER `total_cost_with_vat`, ADD `item_total` DECIMAL(15,2) NULL AFTER `total_profit_margin`;
+
+ALTER TABLE `estimate_master` ADD `total_margin` DECIMAL(15,2) NULL AFTER `GrandTotal`, ADD `material_cost` DECIMAL(15,2) NULL AFTER `total_margin`, ADD `labour_cost` DECIMAL(15,2) NULL AFTER `material_cost`, ADD `material_delivery_cost` DECIMAL(15,2) NULL AFTER `labour_cost`;
+ALTER TABLE `estimate_master` ADD `project_cost` DECIMAL(15,2) NULL AFTER `material_delivery_cost`;
+ALTER TABLE `estimate_master` ADD `transport_cost` DECIMAL(15,2) NULL AFTER `labour_cost`;
+ALTER TABLE `leads` ADD `BOQ_number` VARCHAR(100) NULL DEFAULT NULL AFTER `remarks`;
+
+
+change v_estimate_detail
+change v_estimate_master
+
+
+---------------------------------------------System updated--------------------------------------------
+
