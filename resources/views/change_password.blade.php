@@ -90,7 +90,7 @@
 <div class="col-md-10">
    <input type="submit" class="btn btn-primary w-md" value="Change Password"  >  
 
-    <a href="{{URL('/Dashboard')}}" class="btn btn-secondary w-md">Cancel</a>  
+    <a href="{{URL('/admin-dashboard')}}" class="btn btn-secondary w-md">Cancel</a>  
 </div>
 
 </div>

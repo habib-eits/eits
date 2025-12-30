@@ -2555,18 +2555,20 @@ class Accounts extends Controller
 
     public function UserProfile()
     {
-        $v_users = DB::table('user')->where('UserID', session::get('UserID'))->get();
+        // dd('call');
+        $v_users = DB::table('user')->where('id', session::get('UserID'))->get();
+        // dd($v_users);
         return  view('user_profile', compact('v_users'));
     }
     public function ChangePassword()
     {
-        $v_users = DB::table('user')->where('UserID', session::get('UserID'))->get();
+        $v_users = DB::table('user')->where('id', session::get('UserID'))->get();
         return  view('change_password', compact('v_users'));
     }
     public function UpdatePassword(request $request)
     {
-        $user = DB::table('user')->where('UserID', session::get('UserID'))->get();
-        if ($user[0]->Password != $request->input('old_password')) {
+        $user = DB::table('user')->where('id', session::get('UserID'))->first();
+        if ($user->Password != $request->input('old_password')) {
 
 
             return redirect('ChangePassword')->with('error', 'Old password doesnot matched')->with('class', 'danger');
@@ -2591,8 +2593,8 @@ class Accounts extends Controller
 
 
         );
-        $id = DB::table('users')->where('UserID', session::get('UserID'))->update($data);
-        return redirect('Dashboard')->with('error', 'Password updated Successfully')->with('class', 'success');
+        $id = DB::table('user')->where('id', session::get('UserID'))->update($data);
+        return redirect('admin-dashboard')->with('error', 'Password updated Successfully')->with('class', 'success');
     }
 
 
