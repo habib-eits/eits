@@ -32,7 +32,10 @@ class LeadController extends Controller
         $date = Carbon::now(); // or Carbon::parse('2025-06-18');
         // $twoMonthsAgo = $date->subMonths(1)->format('Y-m-d');
         
-        $twoMonthsAgo = \Carbon\Carbon::now()->startOfYear()->format('Y-m-d');
+        // Set default to a very old date to load all records, or use current year start if preferred
+        $twoMonthsAgo = $request->has('filter_min_created_at') && $request->filter_min_created_at != null 
+            ? $request->filter_min_created_at 
+            : '2020-01-01'; // Load all records from 2020 onwards by default
 
    
          // dd(Carbon::now()->endOfQuarter()->format('Y-m-d'));
@@ -142,15 +145,11 @@ class LeadController extends Controller
                     //     $max_created_at = $request->filter_max_created_at;
                     //     $query->whereBetween(DB::raw('DATE(created_at)'), [$min_created_at, $max_created_at]);
                     //  })
-                    ->when(true, function ($query) use ($request) {
-                        $min_created_at = $request->has('filter_min_created_at') && $request->filter_min_created_at != null
-                            ? $request->filter_min_created_at
-                            : now()->subMonth()->format('Y-m-d');
-                    
+                    ->when($request->has('filter_min_created_at') && $request->filter_min_created_at != null, function ($query) use ($request) {
+                        $min_created_at = $request->filter_min_created_at;
                         $max_created_at = $request->has('filter_max_created_at') && $request->filter_max_created_at != null
                             ? $request->filter_max_created_at
                             : now()->format('Y-m-d');
-                    
                         $query->whereBetween(DB::raw('DATE(created_at)'), [$min_created_at, $max_created_at]);
                     })
                      ->when(
@@ -183,21 +182,218 @@ class LeadController extends Controller
                     
 
                 return view('leads.index', compact('services','agents', 'data', 'request', 'Q_statuses', 'statuses', 'campaigns','channels','twoMonthsAgo'));
-            // } else {
-            //     // $agents = User:: where('UserType','Agent')->get();
-            //     $data = Lead::with('branch', 'agent', 'campaign')
-            //         ->where('agent_id', Auth::user()->id)
-            //         ->orderByDesc('id')
-            //         ->get();
-            //     return view('leads.index', compact('data'));
-            
-
-            // return view('leads.index', compact('data'));
         } catch (\Exception $e) {
-            dd( $e->getMessage());
+            dd($e->getMessage());
             return back()->with('error', $e->getMessage());
         }
     }
+
+    public function ajax_leads(Request $request)
+    {
+        try {
+            $query = Lead::with('branch', 'agent', 'campaign')
+                ->when($request->has('filter_status') && $request->filter_status != null, function ($query) use ($request) {
+                    $query->where('status', $request->filter_status);
+                })
+                ->when($request->has('filter_channel_name') && $request->filter_channel_name != null, function ($query) use ($request) {
+                    $query->where('channel', $request->filter_channel_name);
+                })
+                ->when($request->has('filter_agent_id') && $request->filter_agent_id != null, function ($query) use ($request) {
+                    if ($request->filter_agent_id == '-1') {
+                        $query->whereNull('agent_id');
+                    } else {
+                        $query->where('agent_id', $request->filter_agent_id);
+                    }
+                })
+                ->when($request->has('filter_service_id') && $request->filter_service_id != null, function ($query) use ($request) {
+                    if ($request->filter_service_id == '-1') {
+                        $query->whereNull('service_id');
+                    } else {
+                        $query->where('service_id', $request->filter_service_id);
+                    }
+                })
+                ->when($request->has('filter_campaign_id') && $request->filter_campaign_id != null, function ($query) use ($request) {
+                    if ($request->filter_campaign_id == '-1') {
+                        $query->whereNull('campaign_id');
+                    } else {
+                        $query->where('campaign_id', $request->filter_campaign_id);
+                    }
+                })
+                ->when($request->has('filter_last_updated') && $request->filter_last_updated != null, function ($query) use ($request) {
+                    $updatedAt = $request->filter_last_updated;
+                    if ($updatedAt == 'Today') {
+                        $minUdate = Carbon::now()->format('Y-m-d');
+                        $maxUdate = Carbon::now()->format('Y-m-d');
+                    } elseif ($updatedAt == 'Yesterday') {
+                        $minUdate = Carbon::now()->subDay()->format('Y-m-d');
+                        $maxUdate = Carbon::now()->subDay()->format('Y-m-d');
+                    } elseif ($updatedAt == '3') {
+                        $minUdate = Carbon::now()->subDays(3)->format('Y-m-d');
+                        $maxUdate = Carbon::now()->subDay()->format('Y-m-d');
+                    } elseif ($updatedAt == 'week') {
+                        $minUdate = Carbon::now()->startOfWeek()->format('Y-m-d');
+                        $maxUdate = Carbon::now()->endOfWeek()->format('Y-m-d');
+                    } elseif ($updatedAt == 'month') {
+                        $minUdate = Carbon::now()->startOfMonth()->format('Y-m-d');
+                        $maxUdate = Carbon::now()->endOfMonth()->format('Y-m-d');
+                    } elseif ($updatedAt == 'last_month') {
+                        $minUdate = Carbon::now()->subMonth()->startOfMonth()->format('Y-m-d');
+                        $maxUdate = Carbon::now()->subMonth()->endOfMonth()->format('Y-m-d');
+                    } elseif ($updatedAt == 'quarter') {
+                        $minUdate = Carbon::now()->startOfQuarter()->format('Y-m-d');
+                        $maxUdate = Carbon::now()->endOfQuarter()->format('Y-m-d');
+                    } elseif ($updatedAt == 'year') {
+                        $minUdate = Carbon::now()->startOfYear()->format('Y-m-d');
+                        $maxUdate = Carbon::now()->endOfYear()->format('Y-m-d');
+                    }
+                    $query->whereBetween(DB::raw('DATE(updated_at)'), [$minUdate, $maxUdate]);
+                })
+                ->when($request->has('filter_creation_date') && $request->filter_creation_date != null, function ($query) use ($request) {
+                    $createdAt = $request->filter_creation_date;
+                    if ($createdAt == 'Today') {
+                        $minCdate = Carbon::now()->format('Y-m-d');
+                        $maxCdate = Carbon::now()->format('Y-m-d');
+                    } elseif ($createdAt == 'Yesterday') {
+                        $minCdate = Carbon::now()->subDay()->format('Y-m-d');
+                        $maxCdate = Carbon::now()->subDay()->format('Y-m-d');
+                    } elseif ($createdAt == '3') {
+                        $minCdate = Carbon::now()->subDays(3)->format('Y-m-d');
+                        $maxCdate = Carbon::now()->subDay()->format('Y-m-d');
+                    } elseif ($createdAt == 'week') {
+                        $minCdate = Carbon::now()->startOfWeek()->format('Y-m-d');
+                        $maxCdate = Carbon::now()->endOfWeek()->format('Y-m-d');
+                    } elseif ($createdAt == 'month') {
+                        $minCdate = Carbon::now()->startOfMonth()->format('Y-m-d');
+                        $maxCdate = Carbon::now()->endOfMonth()->format('Y-m-d');
+                    } elseif ($createdAt == 'last_month') {
+                        $minCdate = Carbon::now()->subMonth()->startOfMonth()->format('Y-m-d');
+                        $maxCdate = Carbon::now()->subMonth()->endOfMonth()->format('Y-m-d');
+                    } elseif ($createdAt == 'quarter') {
+                        $minCdate = Carbon::now()->startOfQuarter()->format('Y-m-d');
+                        $maxCdate = Carbon::now()->endOfQuarter()->format('Y-m-d');
+                    } elseif ($createdAt == 'year') {
+                        $minCdate = Carbon::now()->startOfYear()->format('Y-m-d');
+                        $maxCdate = Carbon::now()->endOfYear()->format('Y-m-d');
+                    }
+                    $query->whereBetween(DB::raw('DATE(created_at)'), [$minCdate, $maxCdate]);
+                })
+                ->when($request->has('filter_min_created_at') && $request->filter_min_created_at != null, function ($query) use ($request) {
+                    $min_created_at = $request->filter_min_created_at;
+                    $max_created_at = $request->has('filter_max_created_at') && $request->filter_max_created_at != null
+                        ? $request->filter_max_created_at
+                        : now()->format('Y-m-d');
+                    $query->whereBetween(DB::raw('DATE(created_at)'), [$min_created_at, $max_created_at]);
+                })
+                ->when(
+                    $request->has('filter_min_updated_at') && 
+                    $request->filter_min_updated_at != null && 
+                    $request->has('filter_max_updated_at') && 
+                    $request->filter_max_updated_at != null, 
+                    function ($query) use ($request) {
+                        $min_updated_at = $request->filter_min_updated_at;
+                        $max_updated_at = $request->filter_max_updated_at;
+                        $query->whereBetween(DB::raw('DATE(updated_at)'), [$min_updated_at, $max_updated_at])
+                              ->whereColumn('updated_at', '!=', 'created_at');
+                    }
+                )
+                ->when($request->has('filter_Q_status') && $request->filter_Q_status != null, function ($query) use ($request) {
+                    $query->where('approved_status', $request->filter_Q_status);
+                })
+                ->when(Session::get('UserType') == 'Agent', function ($query) {
+                    $query->where('agent_id', Session::get('UserID'));
+                });
+
+            return DataTables::of($query)
+                ->addColumn('checkbox', function ($row) {
+                    return '<input type="checkbox" id="check_' . $row->id . '" class="dt-select" name="lead_ids[]" onclick="checkValue(' . $row->id . ')" value="' . $row->id . '">';
+                })
+                ->addColumn('contact_number_clean', function ($row) {
+                    return str_replace(' ', '', $row->tel);
+                })
+                ->addColumn('campaign_name', function ($row) {
+                    return isset($row->campaign) ? $row->campaign->name : 'N/A';
+                })
+                ->addColumn('agent_name', function ($row) {
+                    return isset($row->agent) ? $row->agent->name : 'N/A';
+                })
+                ->addColumn('approved_status_display', function ($row) {
+                    return isset($row->approved_status) ? $row->approved_status : 'N/A';
+                })
+                ->addColumn('created_at_formatted', function ($row) {
+                    return isset($row->created_at) ? dmY($row->created_at) : 'N/A';
+                })
+                ->addColumn('updated_at_formatted', function ($row) {
+                    if ($row->created_at != $row->updated_at) {
+                        return isset($row->updated_at) ? dmY($row->updated_at) : '-';
+                    }
+                    return '-';
+                })
+                ->addColumn('service_name', function ($row) {
+                    $service = DB::table('services')->where('id', $row->service_id)->first();
+                    return isset($service) ? $service->name : 'N/A';
+                })
+                ->addColumn('boq_col', function ($row) {
+                    if ($row->BOQ_number != NULL) {
+                        $estimate_master = DB::table('estimate_master')
+                            ->where('EstimateNo', $row->BOQ_number)
+                            ->orderBy('EstimateMasterID', 'desc')
+                            ->first();
+                        
+                        if ($estimate_master) {
+                            $boqLink = '<a target="_blank" href="' . route('boqViewPDF', ['EstimateMasterID' => $estimate_master->EstimateMasterID, 'BranchID' => $estimate_master->BranchID]) . '"><small>BOQ: </small>' . $row->BOQ_number . '</a><br>';
+                            $quoLink = '<a href="' . url('/EstimateViewPDF/' . $estimate_master->EstimateMasterID . '/' . $estimate_master->BranchID) . '" target="_blank"><small>QUO: </small>' . $estimate_master->ReferenceNo . '</a>';
+                            return $boqLink . $quoLink;
+                        }
+                    }
+                    return 'N/A';
+                })
+                ->addColumn('margin', function ($row) {
+                    if ($row->BOQ_number != NULL) {
+                        $estimate_master = DB::table('estimate_master')
+                            ->where('EstimateNo', $row->BOQ_number)
+                            ->orderBy('EstimateMasterID', 'desc')
+                            ->first();
+                        return $estimate_master ? $estimate_master->total_margin : 'N/A';
+                    }
+                    return 'N/A';
+                })
+                ->addColumn('total_amount', function ($row) {
+                    if ($row->BOQ_number != NULL) {
+                        $estimate_master = DB::table('estimate_master')
+                            ->where('EstimateNo', $row->BOQ_number)
+                            ->orderBy('EstimateMasterID', 'desc')
+                            ->first();
+                        return $estimate_master ? $estimate_master->GrandTotal : 'N/A';
+                    }
+                    return 'N/A';
+                })
+                ->addColumn('remarks', function ($row) {
+                    $followup = DB::table('followups')->where('lead_id', $row->id)->orderBy('id', 'desc')->select('remarks')->first();
+                    return $followup && $followup->remarks ? $followup->remarks : '-';
+                })
+                ->addColumn('actions', function ($row) {
+                    $actions = '<div class="d-flex align-items-center col-actions">
+                        <div class="dropdown">
+                            <a href="#" class="dropdown-toggle card-drop" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="mdi mdi-dots-horizontal font-size-18"></i>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" style="position: absolute; inset: 0px 0px auto auto; margin: 0px; transform: translate(-33px, 27px);" data-popper-placement="bottom-end">
+                                <li><a href="' . route('lead.edit', $row->id) . '" class="dropdown-item"><i class="bx bx-pencil font-size-16 text-secondary me-1"></i>Edit Lead</a></li>
+                                <li><a href="' . route('lead.show', $row->id) . '" class="dropdown-item"><i class="mdi mdi-eye-outline font-size-16 text-primary me-1"></i>View Lead</a></li>
+                                <li><a href="' . route('boq-create', $row->id) . '" class="dropdown-item"><i class="mdi mdi-plus font-size-16 text-success me-1"></i>Create BOQ</a></li>
+                                <li><a href="javascript:void(0)" onclick="delete_confirm_n(`leadDelete`,\'' . $row->id . '\')" class="dropdown-item"><i class="bx bx-trash font-size-16 text-danger me-1"></i>Delete Lead</a></li>
+                            </ul>
+                        </div>
+                    </div>';
+                    return $actions;
+                })
+                ->rawColumns(['checkbox', 'boq_col', 'actions'])
+                ->make(true);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function create()
     {
 
@@ -559,7 +755,7 @@ class LeadController extends Controller
             $lead->leadDetails()->delete();
             $lead->delete();
             DB::commit();
-            return back()->with('error', 'Lead Data Deleated Successfully')->where('class','succuess')->withInput();
+            return back()->with('error', 'Lead Data Deleted Successfully')->with('class', 'success');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', $e->getMessage())->withInput();
