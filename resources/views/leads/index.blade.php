@@ -309,7 +309,7 @@
                         <div class="col-lg-2 col-md-4 col-sm-6">
                             <label for=""><strong>Created at To</strong></label>
                             <input type="date" name="filter_max_created_at" id="filter_max_created_at"
-                                value="{{ $request->filter_max_created_at ?? date('Y-m-d') }}" class="form-control">
+                                value="{{ $request->filter_max_created_at }}" class="form-control">
                         </div>
                         <div class="col-lg-2 col-md-4 col-sm-6">
                             <label for=""><strong>Updated at From</strong></label>
