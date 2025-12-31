@@ -42,6 +42,7 @@ use App\Http\Controllers\BranchController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\CompanyController;
 
 
@@ -879,7 +880,11 @@ Route::post('/ajax_party_save',[Accounts::class,'ajax_party_save']);
     Route::get('qualifiedStatusDelete/{id}', [StatusController::class, 'qualifiedStatusDelete'])->name('qualifiedStatus.delete');
 
     Route::get('/Booking', [BookingController::class, 'index']);
-    Route::get('/calendar', [BookingController::class, 'calendar']);
+    // Route::get('/calendar', [BookingController::class, 'calendar']);
+    Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar');
+    Route::get('/ajax_followup', [CalendarController::class, 'ajax_followup']);
+    Route::post('/followup/update/{id}', [CalendarController::class, 'updateFollowup']);
+
 
     Route::get('/ajax_booking', [BookingController::class, 'ajax_booking']);
     Route::get('/BookingCreate/{id}', [BookingController::class, 'BookingCreate'])->name('booking.create');

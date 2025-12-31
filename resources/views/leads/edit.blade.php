@@ -44,7 +44,7 @@
                                                 Activity</button>
                                             <a href="{{ url('leads') }}" class="btn btn-primary">Back</a>
                                             <button data-bs-toggle="modal" data-bs-target="#editCustomer" class="btn btn-warning  mx-2" >Edit Customer</button>
-                                            <a href="{{ route('booking.create',$lead->id ) }}" class="btn btn-dark">Create Booking</a>
+                                            <a href="{{ route('booking.create',$lead->id ) }}" class="btn btn-dark d-none">Create Booking</a>
                                             <button data-bs-toggle="modal" data-bs-target="#createFollowUpModal" class="btn btn-info  mx-2" >Follow Up</button>
 
                                            
@@ -120,7 +120,7 @@
 
                                             <div class="col-lg-4 col-md-6 col-sm-12">
                                                 <label for="branch_id"><strong>Branch:</strong></label>
-                                                <select name="branch_id" id="branch_id" class="form-select select2">
+                                                <select name="branch_id" id="branch_id" class="form-select">
                                                     <option value="" selected>--Select Branch--</option>
                                                     @foreach ($branches as $item)
                                                         <option value="{{ $item->id }}"

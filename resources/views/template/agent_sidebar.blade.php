@@ -52,7 +52,7 @@
                     </a>
                     <ul class="sub-menu" aria-expanded="false">
                         <li> <a href="{{ URL('/leads') }}" key="t-products">Leads</a></li>
-                        <li> <a href="{{ URL('/Booking') }}" key="t-products">Bookings</a></li>
+                        {{-- <li> <a href="{{ URL('/Booking') }}" key="t-products">Bookings</a></li> --}}
                         <li> <a href="{{ URL('/calendar') }}" key="t-products">Calendar</a></li>
                         <li> <a href="{{ URL('/Parties') }}" key="t-products">Customers</a></li>
                         <li> <a href="{{ route('followups.index') }}" key="t-products">Followups</a></li>

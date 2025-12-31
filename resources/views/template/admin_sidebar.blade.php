@@ -6,16 +6,16 @@
             <ul class="metismenu list-unstyled" id="side-menu">
 
                 <li>
-                    
+
                     <a href="{{ URL('/admin-dashboard') }}" class="waves-effect">
-                   
+
                         <i class="mdi mdi-speedometer-slow mb-0"></i>
 
                         <span key="t-dashboards">Dashboard</span>
                     </a>
 
                 </li>
-       
+
 
                 <li>
                     <a href="javascript: void(0);" class="has-arrow waves-effect">
@@ -24,7 +24,7 @@
                     </a>
                     <ul class="sub-menu" aria-expanded="false">
                         <li> <a href="{{ URL('/leads') }}" key="t-products">Leads</a></li>
-                        <li> <a href="{{ URL('/Booking') }}" key="t-products">Bookings</a></li>
+                        {{-- <li> <a href="{{ URL('/Booking') }}" key="t-products">Bookings</a></li> --}}
                         <li> <a href="{{ URL('/calendar') }}" key="t-products">Calendar</a></li>
                         <li> <a href="{{ URL('/Parties') }}" key="t-products">Customers</a></li>
                         <li> <a href="{{ route('followups.index') }}" key="t-products">Followups</a></li>
@@ -45,10 +45,10 @@
                         <li> <a href="{{ URL('/Invoice') }}" key="t-products">Invoices</a></li>
                         {{-- <li> <a href="{{ URL('/receipt-list') }}" key="t-products">Receipts</a></li> --}}
 
-                       
+
                         <li> <a href="{{ URL('/Estimate') }}" key="t-products">Quotation</a></li>
                         <li> <a href="{{ URL('/boq') }}" key="t-products">BOQ</a></li>
-                       
+
 
 
                     </ul>
@@ -61,8 +61,9 @@
                     <ul class="sub-menu" aria-expanded="false">
 
 
-                        <li><a href="{{ URL('/servicesStatusReport') }}" key="t-products">Lead Service Status Report</a></li>
-                       
+                        <li><a href="{{ URL('/servicesStatusReport') }}" key="t-products">Lead Service Status Report</a>
+                        </li>
+
 
 
 
@@ -70,7 +71,7 @@
 
                     </ul>
                 </li>
- 
+
                 <li>
                     <a href="javascript: void(0);" class="has-arrow waves-effect">
                         <i class="mdi mdi-shopping-outline"></i>
@@ -108,8 +109,8 @@
 
                     </ul>
                 </li>
-             
-           
+
+
 
 
 

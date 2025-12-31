@@ -17,6 +17,7 @@ class Followup extends Model
         'notes',
         'remarks',
         'status',
+        'date',
     ];
 
     public function lead()
