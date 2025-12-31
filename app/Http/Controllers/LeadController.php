@@ -198,6 +198,164 @@ class LeadController extends Controller
             return back()->with('error', $e->getMessage());
         }
     }
+
+    public function ajax_leads(Request $request)
+    {
+        try {
+            $query = Lead::with('branch', 'agent', 'campaign');
+            $query = $this->applyLeadFilters($request, $query);
+
+            return DataTables::of($query)
+                ->addColumn('checkbox', fn($row) => '<input type="checkbox" id="check_' . $row->id . '" class="dt-select" name="lead_ids[]" onclick="checkValue(' . $row->id . ')" value="' . $row->id . '">')
+                ->addColumn('contact_number_clean', fn($row) => str_replace(' ', '', $row->tel))
+                ->addColumn('campaign_name', fn($row) => $row->campaign->name ?? 'N/A')
+                ->addColumn('agent_name', fn($row) => $row->agent->name ?? 'N/A')
+                ->addColumn('approved_status_display', fn($row) => $row->approved_status ?? 'N/A')
+                ->addColumn('created_at_formatted', fn($row) => isset($row->created_at) ? dmY($row->created_at) : 'N/A')
+                ->addColumn('updated_at_formatted', fn($row) => $row->created_at != $row->updated_at ? dmY($row->updated_at) : '-')
+                ->addColumn('service_name', function ($row) {
+                    $service = DB::table('services')->where('id', $row->service_id)->first();
+                    return $service->name ?? 'N/A';
+                })
+                ->addColumn('boq_col', function ($row) {
+                    if ($row->BOQ_number) {
+                        $estimate = DB::table('estimate_master')
+                            ->where('EstimateNo', $row->BOQ_number)
+                            ->orderBy('EstimateMasterID', 'desc')
+                            ->first();
+                        if ($estimate) {
+                            $boqLink = '<a target="_blank" href="' . route('boqViewPDF', ['EstimateMasterID' => $estimate->EstimateMasterID, 'BranchID' => $estimate->BranchID]) . '"><small>BOQ: </small>' . $row->BOQ_number . '</a><br>';
+                            $quoLink = '<a href="' . url('/EstimateViewPDF/' . $estimate->EstimateMasterID . '/' . $estimate->BranchID) . '" target="_blank"><small>QUO: </small>' . $estimate->ReferenceNo . '</a>';
+                            return $boqLink . $quoLink;
+                        }
+                    }
+                    return 'N/A';
+                })
+                ->addColumn('margin', function ($row) {
+                    if ($row->BOQ_number) {
+                        $estimate = DB::table('estimate_master')
+                            ->where('EstimateNo', $row->BOQ_number)
+                            ->orderBy('EstimateMasterID', 'desc')
+                            ->first();
+                        return $estimate->total_margin ?? 'N/A';
+                    }
+                    return 'N/A';
+                })
+                ->addColumn('total_amount', function ($row) {
+                    if ($row->BOQ_number) {
+                        $estimate = DB::table('estimate_master')
+                            ->where('EstimateNo', $row->BOQ_number)
+                            ->orderBy('EstimateMasterID', 'desc')
+                            ->first();
+                        return $estimate->GrandTotal ?? 'N/A';
+                    }
+                    return 'N/A';
+                })
+                ->addColumn('remarks', function ($row) {
+                    $followup = DB::table('followups')->where('lead_id', $row->id)->orderBy('id', 'desc')->select('remarks')->first();
+                    return $followup->remarks ?? '-';
+                })
+                ->addColumn('actions', function ($row) {
+                    return '<div class="d-flex align-items-center col-actions">
+                        <div class="dropdown">
+                            <a href="#" class="dropdown-toggle card-drop" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="mdi mdi-dots-horizontal font-size-18"></i>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" style="position: absolute; inset: 0px 0px auto auto; margin: 0px; transform: translate(-33px, 27px);" data-popper-placement="bottom-end">
+                                <li><a href="' . route('lead.edit', $row->id) . '" class="dropdown-item"><i class="bx bx-pencil font-size-16 text-secondary me-1"></i>Edit Lead</a></li>
+                                <li><a href="' . route('lead.show', $row->id) . '" class="dropdown-item"><i class="mdi mdi-eye-outline font-size-16 text-primary me-1"></i>View Lead</a></li>
+                                <li><a href="' . route('boq-create', $row->id) . '" class="dropdown-item"><i class="mdi mdi-plus font-size-16 text-success me-1"></i>Create BOQ</a></li>
+                                <li><a href="javascript:void(0)" onclick="delete_confirm_n(`leadDelete`,\'' . $row->id . '\')" class="dropdown-item"><i class="bx bx-trash font-size-16 text-danger me-1"></i>Delete Lead</a></li>
+                            </ul>
+                        </div>
+                    </div>';
+                })
+                ->rawColumns(['checkbox', 'boq_col', 'actions'])
+                ->make(true);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    private function applyLeadFilters(Request $request, $query)
+    {
+        if ($request->filled('filter_status')) {
+            $query->where('status', $request->filter_status);
+        }
+
+        if ($request->filled('filter_channel_name')) {
+            $query->where('channel', $request->filter_channel_name);
+        }
+
+        if ($request->filled('filter_agent_id')) {
+            $query->when($request->filter_agent_id == '-1', fn($q) => $q->whereNull('agent_id'), fn($q) => $q->where('agent_id', $request->filter_agent_id));
+        }
+
+        if ($request->filled('filter_service_id')) {
+            $query->when($request->filter_service_id == '-1', fn($q) => $q->whereNull('service_id'), fn($q) => $q->where('service_id', $request->filter_service_id));
+        }
+
+        if ($request->filled('filter_campaign_id')) {
+            $query->when($request->filter_campaign_id == '-1', fn($q) => $q->whereNull('campaign_id'), fn($q) => $q->where('campaign_id', $request->filter_campaign_id));
+        }
+
+        if ($request->filled('filter_last_updated')) {
+            [$min, $max] = $this->resolveDateRange($request->filter_last_updated);
+            $query->whereBetween(DB::raw('DATE(updated_at)'), [$min, $max]);
+        }
+
+        if ($request->filled('filter_creation_date')) {
+            [$min, $max] = $this->resolveDateRange($request->filter_creation_date);
+            $query->whereBetween(DB::raw('DATE(created_at)'), [$min, $max]);
+        }
+
+        if ($request->filled('filter_min_created_at')) {
+            $max = $request->filter_max_created_at ?? now()->format('Y-m-d');
+            $query->whereBetween(DB::raw('DATE(created_at)'), [$request->filter_min_created_at, $max]);
+        }
+
+        if ($request->filled('filter_min_updated_at') && $request->filled('filter_max_updated_at')) {
+            $query->whereBetween(DB::raw('DATE(updated_at)'), [$request->filter_min_updated_at, $request->filter_max_updated_at])
+                ->whereColumn('updated_at', '!=', 'created_at');
+        }
+
+        if ($request->filled('filter_Q_status')) {
+            $query->where('approved_status', $request->filter_Q_status);
+        }
+
+        if (session('UserType') === 'Agent') {
+            $query->where('agent_id', session('UserID'));
+        }
+
+        return $query;
+    }
+
+    private function resolveDateRange($filter)
+    {
+        $today = Carbon::now();
+        switch ($filter) {
+            case 'Today':
+                return [$today->format('Y-m-d'), $today->format('Y-m-d')];
+            case 'Yesterday':
+                $yesterday = Carbon::now()->subDay();
+                return [$yesterday->format('Y-m-d'), $yesterday->format('Y-m-d')];
+            case '3':
+                return [Carbon::now()->subDays(3)->format('Y-m-d'), Carbon::now()->subDay()->format('Y-m-d')];
+            case 'week':
+                return [$today->startOfWeek()->format('Y-m-d'), $today->endOfWeek()->format('Y-m-d')];
+            case 'month':
+                return [$today->startOfMonth()->format('Y-m-d'), $today->endOfMonth()->format('Y-m-d')];
+            case 'last_month':
+                return [Carbon::now()->subMonth()->startOfMonth()->format('Y-m-d'), Carbon::now()->subMonth()->endOfMonth()->format('Y-m-d')];
+            case 'quarter':
+                return [$today->startOfQuarter()->format('Y-m-d'), $today->endOfQuarter()->format('Y-m-d')];
+            case 'year':
+                return [$today->startOfYear()->format('Y-m-d'), $today->endOfYear()->format('Y-m-d')];
+            default:
+                return [$today->format('Y-m-d'), $today->format('Y-m-d')];
+        }
+    }
+    
     public function create()
     {
 

@@ -24,7 +24,7 @@
 
                 </a>
 
-                <a href="{{URL('/Dashboard')}}" class="logo logo-light">
+                <a href="{{route('admin.dasbhoard')}}" class="logo logo-light">
 
                     <span class="logo-sm">
 

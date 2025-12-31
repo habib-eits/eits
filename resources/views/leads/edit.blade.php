@@ -120,8 +120,7 @@
 
                                             <div class="col-lg-4 col-md-6 col-sm-12">
                                                 <label for="branch_id"><strong>Branch:</strong></label>
-                                                <select name="branch_id" id="branch_id" class="form-select select2">
-                                                    <option value="" selected>--Select Branch--</option>
+                                                <select name="branch_id" id="branch_id" class="form-select">
                                                     @foreach ($branches as $item)
                                                         <option value="{{ $item->id }}"
                                                             {{ $lead->branch_id == $item->id ? 'selected' : '' }}>
@@ -146,7 +145,7 @@
                                                 id="subServiceCol">
                                                 <label for="branch_sub_service"><strong>Branch Sub Service:</strong></label>
                                                 <select name="sub_service_id" id="sub_service_id"
-                                                    class="form-select select2">
+                                                    class="form-select">
                                                     <option value="">--Select One--</option>
                                                     @foreach ($subServices as $subservice)
                                                         <option value="{{ $subservice->id }}"

@@ -21,7 +21,7 @@ class Followup extends Model
 
     public function lead()
     {
-        return $this->belongsTo(Lead::class);
+        return $this->belongsTo(Lead::class, 'lead_id', 'id');
     }
     public function user()
     {

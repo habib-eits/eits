@@ -46,6 +46,7 @@ use App\Http\Controllers\CompanyController;
 
 
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\CalenderController;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\EstimateController;
 use App\Http\Controllers\FollowupController;
@@ -74,7 +75,7 @@ Route::get('/CreateHashPassword/{password}', [Accounts::class, 'CreateHashPasswo
 Route::group(['middleware' => ['CheckAdmin']], function () {
 
     // Route::get('/Dashboard', [Accounts::class, 'Dashboard']);
-    Route::get('/admin-dashboard', AdminDashboard::class);
+    Route::get('/admin-dashboard', AdminDashboard::class)->name('admin.dasbhoard');
     Route::get('/super-admin-dashboard', SuperAdminDashboard::class);
     Route::get('/agent-dashboard', AgentDashboard::class);
 
@@ -929,6 +930,13 @@ Route::post('/ajax_party_save',[Accounts::class,'ajax_party_save']);
 
 
     Route::resource('state', StateController::class);
+
+    Route::get('/ajax_followups', [CalenderController::class, 'ajax_followups']);
+    Route::get('/followup', [CalenderController::class, 'show'])->name('followup-show');
+    Route::post('/followup/update', [CalenderController::class, 'update'])
+    ->name('followup.update');
+
+
     
     
         Route::get('boq-export/{id}', [BOQController::class, 'boqExport'])->name('boqExport');

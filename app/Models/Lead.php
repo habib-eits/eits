@@ -28,4 +28,8 @@ class Lead extends Model
     public function campaign(){
         return $this->belongsTo(Campaign::class, 'campaign_id');
     }
+    public function party()
+    {
+        return $this->belongsTo(Party::class, 'partyid', 'PartyID');
+    }
 }

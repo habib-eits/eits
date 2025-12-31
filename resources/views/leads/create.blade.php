@@ -91,7 +91,7 @@
                                 {{-- <div class="row mt-2"> --}}
                                 <div class="col-lg-4 col-md-6 col-sm-12">
                                     <label for="branch_id"><strong>Branch:</strong></label>
-                                    <select name="branch_id" id="branch_id" class="form-select select2">
+                                    <select name="branch_id" id="branch_id" class="form-select">
                                         @foreach ($branches as $item)
                                             <option value="{{ $item->id }}"
                                                 {{ old('branch_id') == $item->id ? 'selected' : '' }}> {{ $item->name }}
