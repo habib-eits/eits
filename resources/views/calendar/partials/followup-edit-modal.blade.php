@@ -1,5 +1,5 @@
 <div class="modal fade" id="followupModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog">
         <div class="modal-content">
             <!-- Header -->
             <div class="modal-header bg-dark text-white">
@@ -10,19 +10,23 @@
             </div>
 
             <!-- Top Info -->
-            <div class="bg-light border-bottom p-3">
-                <div class="row small text-muted">
-                    <div class="col-md-4">
-                        <strong>Customer:</strong> <span id="f_customer_name" class="text-dark fw-bold">-</span>
+            <div class="bg-light border-bottom px-4 py-3">
+                <div class="small text-muted">
+                    <div class="mb-2">
+                        <strong>Customer:</strong>
+                        <span id="f_customer_name" class="text-dark fw-bold ms-2">-</span>
                     </div>
-                    <div class="col-md-3">
-                        <strong>Phone:</strong> <span id="f_phone" class="text-dark fw-bold">-</span>
+                    <div class="mb-2">
+                        <strong>Phone:</strong>
+                        <span id="f_phone" class="text-dark fw-bold ms-2">-</span>
                     </div>
-                    <div class="col-md-3">
-                        <strong>Branch:</strong> <span id="f_branch" class="text-dark">-</span>
+                    <div class="mb-2">
+                        <strong>Branch:</strong>
+                        <span id="f_branch" class="text-dark ms-2">-</span>
                     </div>
-                    <div class="col-md-2">
-                        <strong>Service:</strong> <span id="f_service" class="text-dark">-</span>
+                    <div class="mb-0">
+                        <strong>Service:</strong>
+                        <span id="f_service" class="text-dark ms-2">-</span>
                     </div>
                 </div>
             </div>

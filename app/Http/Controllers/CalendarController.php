@@ -43,7 +43,7 @@ class CalendarController extends Controller
                 'phone'          => $f->lead?->tel ?? 'N/A',
                 'branch'       => $f->lead?->branch?->name ?? 'N/A',
                 'service'      => $f->lead?->branchService?->name ?? 'N/A',
-                'allDay'       => false,
+                'allDay'       => true,
             ])
         );
     }

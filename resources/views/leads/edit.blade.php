@@ -7,26 +7,27 @@
             <div class="container-fluid">
 
                 @if (session('error'))
-                    <div class="alert alert-{{ Session::get('class') }} p-1" id="success-alert">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>Error!</strong> {{session::get('error')}}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
 
-                        {{ Session::get('error') }}
+                @if(session::has('success'))
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <strong>Success!</strong> {{ session::get('success')}}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 @endif
 
                 @if (count($errors) > 0)
-
-                    <div>
-                        <div class="alert alert-danger p-1   border-3">
-                            <p class="font-weight-bold"> There were some problems with your input.</p>
-                            <ul>
-
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
+                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <p class="font-weight-bold"> There were some problems with your input.</p>
+                        <ul>
+                            <li>{{$error}}</li>
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
-
                 @endif
 
 

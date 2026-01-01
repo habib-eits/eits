@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Carbon\Carbon;
 use App\Models\Lead;
 use App\Models\User;
+use App\Models\Party;
 use App\Models\Branch;
 use App\Models\Status;
 use App\Models\Service;
@@ -21,7 +22,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
+use App\Http\Requests\LeadStoreRequest;
 use Illuminate\Support\Facades\Session;
+use App\Http\Requests\LeadUpdateRequest;
 
 class LeadController extends Controller
 {
@@ -195,110 +198,84 @@ class LeadController extends Controller
                 ->when($request->has('filter_status') && $request->filter_status != null, function ($query) use ($request) {
                     $query->where('status', $request->filter_status);
                 })
-                ->when($request->has('filter_channel_name') && $request->filter_channel_name != null, function ($query) use ($request) {
-                    $query->where('channel', $request->filter_channel_name);
-                })
-                ->when($request->has('filter_agent_id') && $request->filter_agent_id != null, function ($query) use ($request) {
-                    if ($request->filter_agent_id == '-1') {
-                        $query->whereNull('agent_id');
-                    } else {
-                        $query->where('agent_id', $request->filter_agent_id);
-                    }
-                })
-                ->when($request->has('filter_service_id') && $request->filter_service_id != null, function ($query) use ($request) {
-                    if ($request->filter_service_id == '-1') {
-                        $query->whereNull('service_id');
-                    } else {
-                        $query->where('service_id', $request->filter_service_id);
-                    }
-                })
-                ->when($request->has('filter_campaign_id') && $request->filter_campaign_id != null, function ($query) use ($request) {
-                    if ($request->filter_campaign_id == '-1') {
-                        $query->whereNull('campaign_id');
-                    } else {
-                        $query->where('campaign_id', $request->filter_campaign_id);
-                    }
-                })
-                ->when($request->has('filter_last_updated') && $request->filter_last_updated != null, function ($query) use ($request) {
-                    $updatedAt = $request->filter_last_updated;
-                    if ($updatedAt == 'Today') {
-                        $minUdate = Carbon::now()->format('Y-m-d');
-                        $maxUdate = Carbon::now()->format('Y-m-d');
-                    } elseif ($updatedAt == 'Yesterday') {
-                        $minUdate = Carbon::now()->subDay()->format('Y-m-d');
-                        $maxUdate = Carbon::now()->subDay()->format('Y-m-d');
-                    } elseif ($updatedAt == '3') {
-                        $minUdate = Carbon::now()->subDays(3)->format('Y-m-d');
-                        $maxUdate = Carbon::now()->subDay()->format('Y-m-d');
-                    } elseif ($updatedAt == 'week') {
-                        $minUdate = Carbon::now()->startOfWeek()->format('Y-m-d');
-                        $maxUdate = Carbon::now()->endOfWeek()->format('Y-m-d');
-                    } elseif ($updatedAt == 'month') {
-                        $minUdate = Carbon::now()->startOfMonth()->format('Y-m-d');
-                        $maxUdate = Carbon::now()->endOfMonth()->format('Y-m-d');
-                    } elseif ($updatedAt == 'last_month') {
-                        $minUdate = Carbon::now()->subMonth()->startOfMonth()->format('Y-m-d');
-                        $maxUdate = Carbon::now()->subMonth()->endOfMonth()->format('Y-m-d');
-                    } elseif ($updatedAt == 'quarter') {
-                        $minUdate = Carbon::now()->startOfQuarter()->format('Y-m-d');
-                        $maxUdate = Carbon::now()->endOfQuarter()->format('Y-m-d');
-                    } elseif ($updatedAt == 'year') {
-                        $minUdate = Carbon::now()->startOfYear()->format('Y-m-d');
-                        $maxUdate = Carbon::now()->endOfYear()->format('Y-m-d');
-                    }
-                    $query->whereBetween(DB::raw('DATE(updated_at)'), [$minUdate, $maxUdate]);
-                })
-                ->when($request->has('filter_creation_date') && $request->filter_creation_date != null, function ($query) use ($request) {
-                    $createdAt = $request->filter_creation_date;
-                    if ($createdAt == 'Today') {
-                        $minCdate = Carbon::now()->format('Y-m-d');
-                        $maxCdate = Carbon::now()->format('Y-m-d');
-                    } elseif ($createdAt == 'Yesterday') {
-                        $minCdate = Carbon::now()->subDay()->format('Y-m-d');
-                        $maxCdate = Carbon::now()->subDay()->format('Y-m-d');
-                    } elseif ($createdAt == '3') {
-                        $minCdate = Carbon::now()->subDays(3)->format('Y-m-d');
-                        $maxCdate = Carbon::now()->subDay()->format('Y-m-d');
-                    } elseif ($createdAt == 'week') {
-                        $minCdate = Carbon::now()->startOfWeek()->format('Y-m-d');
-                        $maxCdate = Carbon::now()->endOfWeek()->format('Y-m-d');
-                    } elseif ($createdAt == 'month') {
-                        $minCdate = Carbon::now()->startOfMonth()->format('Y-m-d');
-                        $maxCdate = Carbon::now()->endOfMonth()->format('Y-m-d');
-                    } elseif ($createdAt == 'last_month') {
-                        $minCdate = Carbon::now()->subMonth()->startOfMonth()->format('Y-m-d');
-                        $maxCdate = Carbon::now()->subMonth()->endOfMonth()->format('Y-m-d');
-                    } elseif ($createdAt == 'quarter') {
-                        $minCdate = Carbon::now()->startOfQuarter()->format('Y-m-d');
-                        $maxCdate = Carbon::now()->endOfQuarter()->format('Y-m-d');
-                    } elseif ($createdAt == 'year') {
-                        $minCdate = Carbon::now()->startOfYear()->format('Y-m-d');
-                        $maxCdate = Carbon::now()->endOfYear()->format('Y-m-d');
-                    }
-                    $query->whereBetween(DB::raw('DATE(created_at)'), [$minCdate, $maxCdate]);
-                })
-                ->when($request->has('filter_min_created_at') && $request->filter_min_created_at != null, function ($query) use ($request) {
-                    $min_created_at = $request->filter_min_created_at;
-                    $max_created_at = $request->has('filter_max_created_at') && $request->filter_max_created_at != null
-                        ? $request->filter_max_created_at
-                        : now()->format('Y-m-d');
-                    $query->whereBetween(DB::raw('DATE(created_at)'), [$min_created_at, $max_created_at]);
-                })
-                ->when(
-                    $request->has('filter_min_updated_at') && 
-                    $request->filter_min_updated_at != null && 
-                    $request->has('filter_max_updated_at') && 
-                    $request->filter_max_updated_at != null, 
-                    function ($query) use ($request) {
-                        $min_updated_at = $request->filter_min_updated_at;
-                        $max_updated_at = $request->filter_max_updated_at;
-                        $query->whereBetween(DB::raw('DATE(updated_at)'), [$min_updated_at, $max_updated_at])
-                              ->whereColumn('updated_at', '!=', 'created_at');
-                    }
+                ->when(request()->filled('filter_channel_name'), fn ($query) =>
+                    $query->where('channel', request('filter_channel_name'))
                 )
-                ->when($request->has('filter_Q_status') && $request->filter_Q_status != null, function ($query) use ($request) {
-                    $query->where('approved_status', $request->filter_Q_status);
+                ->when(request()->filled('filter_agent_id'), function ($query) {
+                    $agentId = request('filter_agent_id');
+
+                    $agentId == '-1'
+                        ? $query->whereNull('agent_id')
+                        : $query->where('agent_id', $agentId);
                 })
+                ->when(request()->filled('filter_service_id'), function ($query) {
+                    $serviceId = request('filter_service_id');
+
+                    $serviceId == '-1'
+                        ? $query->whereNull('service_id')
+                        : $query->where('service_id', $serviceId);
+                })
+                ->when(request()->filled('filter_campaign_id'), function ($query) {
+                    $campaignId = request('filter_campaign_id');
+
+                    $campaignId == '-1'
+                        ? $query->whereNull('campaign_id')
+                        : $query->where('campaign_id', $campaignId);
+                })
+                ->when(request()->filled('filter_last_updated'), function ($query) {
+                    $now = Carbon::now();
+                    [$from, $to] = match (request('filter_last_updated')) {
+                        'Today'       => [$now->toDateString(), $now->toDateString()],
+                        'Yesterday'   => [$now->subDay()->toDateString(), $now->subDay()->toDateString()],
+                        '3'           => [$now->subDays(3)->toDateString(), Carbon::yesterday()->toDateString()],
+                        'week'        => [$now->startOfWeek()->toDateString(), $now->endOfWeek()->toDateString()],
+                        'month'       => [$now->startOfMonth()->toDateString(), $now->endOfMonth()->toDateString()],
+                        'last_month'  => [$now->subMonth()->startOfMonth()->toDateString(), $now->subMonth()->endOfMonth()->toDateString()],
+                        'quarter'     => [$now->startOfQuarter()->toDateString(), $now->endOfQuarter()->toDateString()],
+                        'year'        => [$now->startOfYear()->toDateString(), $now->endOfYear()->toDateString()],
+                        default       => [null, null],
+                    };
+
+                    if ($from && $to) {
+                        $query->whereBetween(DB::raw('DATE(updated_at)'), [$from, $to]);
+                    }
+                })
+                ->when(request()->filled('filter_creation_date'), function ($query) {
+                    $now = Carbon::now();
+                    [$from, $to] = match (request('filter_creation_date')) {
+                        'Today'       => [$now->toDateString(), $now->toDateString()],
+                        'Yesterday'   => [$now->subDay()->toDateString(), $now->subDay()->toDateString()],
+                        '3'           => [$now->subDays(3)->toDateString(), Carbon::yesterday()->toDateString()],
+                        'week'        => [$now->startOfWeek()->toDateString(), $now->endOfWeek()->toDateString()],
+                        'month'       => [$now->startOfMonth()->toDateString(), $now->endOfMonth()->toDateString()],
+                        'last_month'  => [$now->subMonth()->startOfMonth()->toDateString(), $now->subMonth()->endOfMonth()->toDateString()],
+                        'quarter'     => [$now->startOfQuarter()->toDateString(), $now->endOfQuarter()->toDateString()],
+                        'year'        => [$now->startOfYear()->toDateString(), $now->endOfYear()->toDateString()],
+                        default       => [null, null],
+                    };
+
+                    if ($from && $to) {
+                        $query->whereBetween(DB::raw('DATE(created_at)'), [$from, $to]);
+                    }
+                })
+                ->when(request()->filled('filter_min_created_at'), function ($query) {
+                    $min = request('filter_min_created_at');
+                    $max = request('filter_max_created_at', now()->toDateString());
+
+                    $query->whereBetween(DB::raw('DATE(created_at)'), [$min, $max]);
+                })
+
+                ->when(request()->filled(['filter_min_updated_at', 'filter_max_updated_at']), function ($query) {
+                    $min = request('filter_min_updated_at');
+                    $max = request('filter_max_updated_at');
+
+                    $query->whereBetween(DB::raw('DATE(updated_at)'), [$min, $max])
+                        ->whereColumn('updated_at', '!=', 'created_at');
+                })
+                ->when(request()->filled('filter_Q_status'), fn($query) =>
+                    $query->where('approved_status', request('filter_Q_status'))
+                )
+
                 ->when(Session::get('UserType') == 'Agent', function ($query) {
                     $query->where('agent_id', Session::get('UserID'));
                 });
@@ -421,100 +398,128 @@ class LeadController extends Controller
             return back()->with('error', $e->getMessage())->withInput();
         }
     }
-    public function store(Request $request)
-    {
+
+    // public function store(Request $request)
+    // {
        
-        $party = DB::table('party')->where('PartyID',$request->input('partyid'))->first();
+    //     $party = DB::table('party')->where('PartyID',$request->input('partyid'))->first();
        
 
-         try {
-            DB::beginTransaction();
-            // $request->validate(
-            //     [
-            //         'name' => 'required|max:255',
-            //         'tel' => 'required|max:255',
-            //         'other_tel' => 'nullable|max:255',
-            //         'bussiness_details' => 'nullable|max:255',
-            //         'service' => 'nullable|max:255',
-            //         'channel' => 'nullable|max:255',
-            //         'amount' => 'nullable|numeric|regex:/^\d{1,18}(\.\d{1,3})?$/',
-            //     ],
-            //     [
-            //         'amount.regex' => 'Please add a valid amount i-e number with max 18 digits (quintillion) and upto 3 decimal points.',
-            //     ]
-            // );
-            // dd($request->all());
-            // Manually set the timestamps
-            $createdAt = Carbon::now();
-            $updatedAt = Carbon::now();
+    //      try {
+    //         DB::beginTransaction();
+    //         // $request->validate(
+    //         //     [
+    //         //         'name' => 'required|max:255',
+    //         //         'tel' => 'required|max:255',
+    //         //         'other_tel' => 'nullable|max:255',
+    //         //         'bussiness_details' => 'nullable|max:255',
+    //         //         'service' => 'nullable|max:255',
+    //         //         'channel' => 'nullable|max:255',
+    //         //         'amount' => 'nullable|numeric|regex:/^\d{1,18}(\.\d{1,3})?$/',
+    //         //     ],
+    //         //     [
+    //         //         'amount.regex' => 'Please add a valid amount i-e number with max 18 digits (quintillion) and upto 3 decimal points.',
+    //         //     ]
+    //         // );
+    //         // dd($request->all());
+    //         // Manually set the timestamps
+    //         $createdAt = Carbon::now();
+    //         $updatedAt = Carbon::now();
 
-                $leadData = array(
-                'partyid' => $party->PartyID,
-                'name' => $party->PartyName,
-                'tel' => $party->Phone,
-                'other_tel' => $request->other_tel,
-                'business_details' => $request->business_details,
-                'service' => $request->service,
-                'channel' => $request->channel,
-                'campaign_id' => $request->campaign_id,
-                'branch_id' => $request->branch_id,
-                'agent_id' => $request->agent_id,
-                'service_id' => $request->service_id,
-                'sub_service_id' => $request->sub_service_id,
-                'currency' => $request->currency,
-                'amount' => $request->amount,
-                'created_at' => $createdAt,
-                'updated_at' => NULL,
-                // 'status' => isset($request->status) ? $request->status : $lead->status,
-                // 'approved_status' => !isset($request->status) ? $request->qualified_status : ($request->status == 'Qualified' ? $request->qualified_status : null),
+    //             $leadData = array(
+    //             'partyid' => $party->PartyID,
+    //             'name' => $party->PartyName,
+    //             'tel' => $party->Phone,
+    //             'other_tel' => $request->other_tel,
+    //             'business_details' => $request->business_details,
+    //             'service' => $request->service,
+    //             'channel' => $request->channel,
+    //             'campaign_id' => $request->campaign_id,
+    //             'branch_id' => $request->branch_id,
+    //             'agent_id' => $request->agent_id,
+    //             'service_id' => $request->service_id,
+    //             'sub_service_id' => $request->sub_service_id,
+    //             'currency' => $request->currency,
+    //             'amount' => $request->amount,
+    //             'created_at' => $createdAt,
+    //             'updated_at' => NULL,
+    //             // 'status' => isset($request->status) ? $request->status : $lead->status,
+    //             // 'approved_status' => !isset($request->status) ? $request->qualified_status : ($request->status == 'Qualified' ? $request->qualified_status : null),
 
-            );
-
-
+    //         );
 
 
-            // $data = array(
-            //                 'PartyName' => $request->name, 
-            //                 'Phone' => $request->tel, 
-            //                 'Address' => $request->business_details,
+
+
+    //         // $data = array(
+    //         //                 'PartyName' => $request->name, 
+    //         //                 'Phone' => $request->tel, 
+    //         //                 'Address' => $request->business_details,
                             
-            //                 );
+    //         //                 );
             
 
-            // $party = DB::table('party')->where('PartyName',$request->name)->get(); 
+    //         // $party = DB::table('party')->where('PartyName',$request->name)->get(); 
 
-            // if(count($party)==0)
-            // {
+    //         // if(count($party)==0)
+    //         // {
 
-            // $partyid= DB::table('party')->insertGetId($data);
-            // }
-            // else
-            // {
-            //     $partyid = $party[0]->PartyID;;
-            // }
+    //         // $partyid= DB::table('party')->insertGetId($data);
+    //         // }
+    //         // else
+    //         // {
+    //         //     $partyid = $party[0]->PartyID;;
+    //         // }
 
 
  
-            // $leadData = Arr::add($leadData, 'partyid', $partyid);
+    //         // $leadData = Arr::add($leadData, 'partyid', $partyid);
 
 
  
 
-            $id_save= DB::table('leads')->insertGetId($leadData);
+    //         $id_save= DB::table('leads')->insertGetId($leadData);
             
             
             
 
 
 
-            DB::commit();
-            return redirect('leads')->withSuccess('Lead Created Successfully');
-        } catch (\Exception $e) {
-            DB::rollBack();
-             dd($e->getMessage());
-            return back()->with('error', $e->getMessage())->withInput();
+    //         DB::commit();
+    //         return redirect('leads')->withSuccess('Lead Created Successfully');
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //          dd($e->getMessage());
+    //         return back()->with('error', $e->getMessage())->withInput();
+    //     }
+    // }
+
+    public function store(LeadStoreRequest $request)
+        {
+            $party = Party::where('PartyID', $request->partyid)->first();
+
+            try {
+                DB::beginTransaction();
+
+                $leadData = array_merge($request->validated(), [
+                    'partyid' => $party->PartyID,
+                    'name'    => $party->PartyName,
+                    'tel'     => $party->Phone,
+                    'created_at' => Carbon::now(),
+                    'updated_at' => null,
+                ]);
+
+                Lead::create($leadData);
+
+                DB::commit();
+                return redirect('leads')->withSuccess('Lead Created Successfully');
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return back()->with('error', $e->getMessage())->withInput();
+            }
         }
-    }
+
 
 
     public function show($id)
@@ -554,7 +559,7 @@ class LeadController extends Controller
 
         try {
             $lead = Lead::findOrFail($id);
-            $party = DB::table('party')->get();
+            $party = Party::all();
 
             $followups = Followup::where('lead_id',$lead->id)->get();
 
@@ -619,134 +624,203 @@ class LeadController extends Controller
             return back()->with('error', $e->getMessage())->withInput();
         }
     }
-    public function update(Request $request, $id)
-    {             
+
+    // public function update(Request $request, $id)
+    // {             
         
-        $request->session()->forget('previous_url');
+    //     $request->session()->forget('previous_url');
 
 
-         // dump($id);
+    //      // dump($id);
          
-        try {
-            DB::beginTransaction();
-            $request->validate(
-                [
-                    'partyid' => 'required|max:255',
-                    'other_tel' => 'nullable|max:255',
-                    'bussiness_details' => 'nullable|max:255',
-                    'service' => 'nullable|max:255',
-                    'channel' => 'nullable|max:255',
-                    'amount' => 'nullable|numeric|regex:/^\d{1,18}(\.\d{1,3})?$/',
-                ],
-                [
-                    'amount.regex' => 'Please add a valid amount i-e number with max 18 digits (quintillion) and upto 3 decimal points.',
-                ]
-            );
+    //     try {
+    //         DB::beginTransaction();
+    //         $request->validate(
+    //             [
+    //                 'partyid' => 'required|max:255',
+    //                 'other_tel' => 'nullable|max:255',
+    //                 'bussiness_details' => 'nullable|max:255',
+    //                 'service' => 'nullable|max:255',
+    //                 'channel' => 'nullable|max:255',
+    //                 'amount' => 'nullable|numeric|regex:/^\d{1,18}(\.\d{1,3})?$/',
+    //             ],
+    //             [
+    //                 'amount.regex' => 'Please add a valid amount i-e number with max 18 digits (quintillion) and upto 3 decimal points.',
+    //             ]
+    //         );
 
 
-            $lead = Lead::findOrFail($id);  
-            $party = DB::table('party')->where('PartyID',$request->partyid)->first();
+    //         $lead = Lead::findOrFail($id);  
+    //         $party = DB::table('party')->where('PartyID',$request->partyid)->first();
             
 
-            $current_time = Carbon::now();
+    //         $current_time = Carbon::now();
 
-            $leadData = [
-                'partyid' => $party->PartyID,
-                'name' => $party->PartyName,
-                'tel' => $party->Phone,
-                'business_details' => $request->business_details,
-                'service' => $request->service,
-                'channel' => $request->channel,
-                'campaign_id' => $request->campaign_id,
-                'branch_id' => $request->branch_id,
-                'agent_id' => $request->agent_id,
-                'service_id' => $request->service_id,
-                'sub_service_id' => $request->sub_service_id,
-                'currency' => $request->currency,
-                'amount' => $request->amount,
-                'status' => isset($request->status) ? $request->status : $lead->status,
-                // 'approved_status' =>  $request->qualified_status,
-                'approved_status' => !isset($request->status)
-                    ? $request->qualified_status
-                    : ($request->status == 'Qualified' ? $request->qualified_status : null),
+    //         $leadData = [
+    //             'partyid' => $party->PartyID,
+    //             'name' => $party->PartyName,
+    //             'tel' => $party->Phone,
+    //             'business_details' => $request->business_details,
+    //             'service' => $request->service,
+    //             'channel' => $request->channel,
+    //             'campaign_id' => $request->campaign_id,
+    //             'branch_id' => $request->branch_id,
+    //             'agent_id' => $request->agent_id,
+    //             'service_id' => $request->service_id,
+    //             'sub_service_id' => $request->sub_service_id,
+    //             'currency' => $request->currency,
+    //             'amount' => $request->amount,
+    //             'status' => isset($request->status) ? $request->status : $lead->status,
+    //             // 'approved_status' =>  $request->qualified_status,
+    //             'approved_status' => !isset($request->status)
+    //                 ? $request->qualified_status
+    //                 : ($request->status == 'Qualified' ? $request->qualified_status : null),
 
-                'updated_at' => $lead->updated_at,
-                'remarks' => $request->remarks,
-            ];
+    //             'updated_at' => $lead->updated_at,
+    //             'remarks' => $request->remarks,
+    //         ];
 
+    //         $note = [];
+    //         $needsUpdate = false;
+
+    //         if ($lead->status != $leadData["status"]) {
+    //             $note[] = "status: " . $lead->status . " -> " . $leadData["status"];
+    //             $needsUpdate = true;
+    //         }
+
+    //         if ($lead->approved_status != $leadData["approved_status"]) {
+    //             $note[] = "approved_status: " . $lead->approved_status . " -> " . $leadData["approved_status"];
+    //             $needsUpdate = true;
+    //         }
+
+    //         // Update the 'updated_at' field if any changes were detected
+    //         if ($needsUpdate) {
+    //             $leadData["updated_at"] = $current_time;
+    //         }
+            
+    //         // Combine notes if necessary
+    //         $noteString = implode(", ", $note);
+    //         Lead::findOrFail($id)->update($leadData);
+            
+    //         //if chnages are made in statuses
+    //         if($noteString != ''){
+
+    //             $leadDetailData = [
+    //                 'lead_id' => $lead->id,
+    //                 'description' => $noteString,
+    //                 'created_at' => $current_time,
+    //                 'updated_at' => NULL,
+                    
+    //             ];
+    //             LeadActivity::create($leadDetailData);
+
+    //         }
+            
+    
+    //         //  $data = array(
+    //         //     'PartyName' => $request->name, 
+    //         //     'Phone' => $request->tel, 
+    //         // );
+            
+
+    //         // $party = DB::table('party')->where('PartyName',$request->name)->get(); 
+
+    //         // if(count($party)==0) {
+
+    //         // $partyid= DB::table('party')->insertGetId($data);
+    //         // }
+    //         // else{
+    //         //     $partyid = $party[0]->PartyID;
+    //         // }
+    //         // Arr::add($leadData, 'partyid', $partyid);
+           
+    //         DB::commit();
+
+    //            if( ($request->qualified_status=='Closed Won') && ($request->action==1))
+    //         {
+    //         return redirect('BookingCreate/'.$id)->withSuccess('Lead Won Successfully. Now create booking')->withInput();
+    //         }
+    //         else
+    //         {
+    //             // return redirect('leads')->withSuccess('Lead Updated Successfully');
+    //             return redirect($request->previous_url)->withSuccess('Lead Updated Successfully');
+    //         } 
+
+
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         // dd($e->getMessage());
+    //         return back()->with('error', $e->getMessage())->withInput();
+    //     }
+    // }
+
+    public function update(LeadUpdateRequest $request, $id)
+    {
+        $request->session()->forget('previous_url');
+
+        try {
+            DB::beginTransaction();
+
+            $lead = Lead::findOrFail($id);
+
+            $party = Party::where('PartyID', $request->partyid)->first();
+            if ($party) {
+                $lead->partyid = $party->PartyID;
+                $lead->name = $party->PartyName;
+                $lead->tel = $party->Phone;
+            }
+
+            $leadData = $request->validatedForUpdate($lead); 
+
+            // Track changes for status and approved_status
             $note = [];
             $needsUpdate = false;
 
-            if ($lead->status != $leadData["status"]) {
-                $note[] = "status: " . $lead->status . " -> " . $leadData["status"];
+            if ($lead->status != $leadData['status']) {
+                $note[] = "status: {$lead->status} -> {$leadData['status']}";
                 $needsUpdate = true;
             }
 
-            if ($lead->approved_status != $leadData["approved_status"]) {
-                $note[] = "approved_status: " . $lead->approved_status . " -> " . $leadData["approved_status"];
+            if ($lead->approved_status != $leadData['approved_status']) {
+                $note[] = "approved_status: {$lead->approved_status} -> {$leadData['approved_status']}";
                 $needsUpdate = true;
             }
 
-            // Update the 'updated_at' field if any changes were detected
+            // Update 'updated_at' only if changes in status or approved_status
             if ($needsUpdate) {
-                $leadData["updated_at"] = $current_time;
+                $leadData['updated_at'] = now();
+            } else {
+                $leadData['updated_at'] = $lead->updated_at;
             }
-            
-            // Combine notes if necessary
-            $noteString = implode(", ", $note);
-            Lead::findOrFail($id)->update($leadData);
-            
-            //if chnages are made in statuses
-            if($noteString != ''){
 
-                $leadDetailData = [
+            $lead->update($leadData);
+
+            if (!empty($note)) {
+                LeadActivity::create([
                     'lead_id' => $lead->id,
-                    'description' => $noteString,
-                    'created_at' => $current_time,
-                    'updated_at' => NULL,
-                    
-                ];
-                LeadActivity::create($leadDetailData);
-
+                    'description' => implode(", ", $note),
+                    'created_at' => now(),
+                    'updated_at' => null,
+                ]);
             }
-            
-    
-            //  $data = array(
-            //     'PartyName' => $request->name, 
-            //     'Phone' => $request->tel, 
-            // );
-            
 
-            // $party = DB::table('party')->where('PartyName',$request->name)->get(); 
-
-            // if(count($party)==0) {
-
-            // $partyid= DB::table('party')->insertGetId($data);
-            // }
-            // else{
-            //     $partyid = $party[0]->PartyID;
-            // }
-            // Arr::add($leadData, 'partyid', $partyid);
-           
             DB::commit();
 
-               if( ($request->qualified_status=='Closed Won') && ($request->action==1))
-            {
-            return redirect('BookingCreate/'.$id)->withSuccess('Lead Won Successfully. Now create booking')->withInput();
+            if (($request->qualified_status == 'Closed Won') && ($request->action == 1)) {
+                return redirect("BookingCreate/{$lead->id}")
+                    ->withSuccess('Lead Won Successfully. Now create booking')
+                    ->withInput();
             }
-            else
-            {
-                // return redirect('leads')->withSuccess('Lead Updated Successfully');
-                return redirect($request->previous_url)->withSuccess('Lead Updated Successfully');
-            } 
 
+            return redirect($request->previous_url)->withSuccess('Lead Updated Successfully');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            // dd($e->getMessage());
             return back()->with('error', $e->getMessage())->withInput();
         }
     }
+
+
     public function delete($id)
     {
         try {
