@@ -145,6 +145,7 @@ Route::group(['middleware' => ['CheckAdmin']], function () {
 
 
     Route::get('/Parties', [Accounts::class, 'Parties']);
+    Route::get('ajax_parties', [Accounts::class, 'ajax_parties'])->name('ajax.parties');
     Route::post('/SaveParties', [Accounts::class, 'SaveParties']);
     Route::get('/PartiesEdit/{id}', [Accounts::class, 'PartiesEdit']);
     Route::post('/PartiesUpdate/', [Accounts::class, 'PartiesUpdate']);

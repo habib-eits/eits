@@ -33,21 +33,14 @@
 
                 @endif
 
-
                 <div class="card shadow-sm">
                     <div class="card-body">
                         <form action="{{ URL('/SaveParties') }}" method="post">
                             {{ csrf_field() }}
                             <div>
                                 <div>
-
                                     <h4 class="card-title">Add Customer</h4>
                                     <p class="card-title-desc"></p>
-
-
-
-
-
 
                                     <div class="mb-2 row">
                                         <label for="example-url-input" class="col-md-2 col-form-label fw-bold">Party
@@ -56,7 +49,6 @@
                                             <input class="form-control" type="text" value="{{ old('PartyName') }}"
                                                 name="PartyName">
                                         </div>
-
                                     </div>
 
                                     <div class="mb-2 row">
@@ -66,7 +58,6 @@
                                             <input class="form-control" type="text" name="TRN"
                                                 value="{{ old('TRN') }}">
                                         </div>
-
                                     </div>
 
                                     <div class="mb-2 row">
@@ -76,11 +67,8 @@
                                             <input class="form-control" type="text" name="Address"
                                                 value="{{ old('Address') }}">
                                         </div>
-
                                     </div>
 
-
-                                   
                                     <div class="mb-2 row">
                                         <label for="example-url-input"
                                             class="col-md-2 col-form-label fw-bold text-danger">State</label>
@@ -88,9 +76,7 @@
                                             <input class="form-control" type="text" name="City"
                                                 value="{{ old('City') }}">
                                         </div>
-
                                     </div>
-
 
                                     <div class="mb-2 row">
                                         <label for="example-url-input"
@@ -99,7 +85,6 @@
                                             <input class="form-control" type="number" name="Mobile"
                                                 value="{{ old('Mobile') }}">
                                         </div>
-
                                     </div>
 
                                     <div class="mb-2 row">
@@ -108,7 +93,6 @@
                                             <input class="form-control" type="number" name="Phone"
                                                 value="{{ old('Phone') }}">
                                         </div>
-
                                     </div>
 
                                     <div class="mb-2 row">
@@ -117,7 +101,6 @@
                                             <input class="form-control" type="text" name="Email"
                                                 value="{{ old('Email') }}">
                                         </div>
-
                                     </div>
 
                                     <div class="mb-2 row">
@@ -130,8 +113,6 @@
 
                                     </div>
 
-
-
                                     <div class="mb-2 row">
                                         <label for="example-url-input" class="col-md-2 col-form-label fw-bold">Invoice Due
                                             Days</label>
@@ -139,7 +120,6 @@
                                             <input class="form-control" type="number" name="InvoiceDueDays"
                                                 value="{{ old('InvoiceDueDays') }}">
                                         </div>
-
                                     </div>
 
                                     <div class="mb-1 row">
@@ -147,51 +127,20 @@
                                             class="col-md-2 col-form-label fw-bold">Active</label>
                                         <div class="col-md-4">
                                             <select name="Active" class="form-select">
-
-
                                                 <option value="Yes"
                                                     {{ old('Active') == 'Yes' ? 'selected=selected' : '' }}>Yes</option>
                                                 <option value="No"
                                                     {{ old('Active') == 'No' ? 'selected=selected' : '' }}>No</option>
 
-
-
-
                                             </select>
                                         </div>
                                     </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
                                 </div>
-
                             </div>
-
-
-
-
-
-
-
                     </div>
                     <div class="card-footer  ">
                         <button type="submit"
                             class="btn btn-primary me-1 waves-effect waves-float waves-light">Submit</button>
-
-
-
-
                         <button type="reset" class="btn btn-outline-secondary waves-effect">Reset</button>
                     </div>
                 </div>
@@ -223,36 +172,7 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-
-
-
-
-                                            @foreach ($supplier as $value)
-                                                <tr>
-
-                                                    <td>{{ $value->PartyID }}</td>
-                                                    <td>{{ $value->PartyName }}</td>
-                                                    <td>{{ $value->TRN }}</td>
-                                                    <td>{{ $value->Address }}</td>
-
-                                                    <td>{{ $value->City }}</td>
-                                                    <td>{{ $value->Phone }}</td>
-                                                    <td>{{ $value->Email }}</td>
-
-                                                    <td>
-                                                        <div class="d-flex gap-1">
-                                                            <a href="{{ URL('/PartiesEdit/' . $value->PartyID) }}"
-                                                                class="text-secondary"><i
-                                                                    class="mdi mdi-pencil font-size-15"></i></a>
-                                                            {{-- <a href="#"  class="text-secondary" onclick="delete_confirm2('PartiesDelete',{{$value->PartyID}})"><i class="mdi mdi-delete font-size-15"></i></a> --}}
-                                                            <!-- <a href="{{ URL('/checkUserRole/' . $value->PartyID) }}"  class="text-secondary"><i class="fas fa-user-lock
- font-size-12"></i></a> -->
-                                                        </div>
-                                                    </td>
-
-                                                </tr>
-                                            @endforeach
-
+                                            <!--- data comming dynamic throgh datatables -->
                                         </tbody>
                                     </table>
 
@@ -273,11 +193,51 @@
     </div>
     </div>
     <!-- END: Content-->
-    <script type="text/javascript">
+
+    <script>
         $(document).ready(function() {
-            $('#student_table').DataTable();
+            $('#student_table').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ route('ajax.parties') }}",
+
+                columns: [{
+                        data: 'PartyID',
+                        name: 'PartyID'
+                    },
+                    {
+                        data: 'PartyName',
+                        name: 'PartyName'
+                    },
+                    {
+                        data: 'TRN',
+                        name: 'TRN'
+                    },
+                    {
+                        data: 'Address',
+                        name: 'Address'
+                    },
+                    {
+                        data: 'City',
+                        name: 'City'
+                    },
+                    {
+                        data: 'Phone',
+                        name: 'Phone'
+                    },
+                    {
+                        data: 'Email',
+                        name: 'Email'
+                    },
+                    {
+                        data: 'action',
+                        name: 'action',
+                        orderable: false,
+                        searchable: false
+                    }
+                ]
+            });
         });
     </script>
-
 
 @endsection

@@ -12,27 +12,28 @@ use Image;
 
 use Session;
 use Carbon\Carbon;
-use App\Mail\SendMail;
+use App\Models\Party;
 // for excel export
 // use App\Mail\OrderShipped;
+use App\Mail\SendMail;
 use Illuminate\Support\Arr;
-use App\Exports\ExcelLedger;
 // end for excel export
-use Illuminate\Http\Request;
+use App\Exports\ExcelLedger;
 
+use Illuminate\Http\Request;
 use App\Exports\SalemanExport;
 use Illuminate\Validation\Rule;
 use Yajra\DataTables\DataTables;
 use App\Exports\PartyLedgerExcel;
 use App\Exports\PartyBalanceExcel;
 use Illuminate\Support\Facades\Hash;
+
 use Illuminate\Support\Facades\Http;
 
 use Illuminate\Support\Facades\Mail;
-
 use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\Support\Facades\Crypt;
 
+use Illuminate\Support\Facades\Crypt;
 use PhpOffice\PhpSpreadsheet\Writer\Xls;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -2364,6 +2365,43 @@ class Accounts extends Controller
         $supplier = DB::table('party')->get();
         return view('party', compact('pagetitle', 'supplier'));
     }
+
+    public function ajax_parties(Request $request)
+    {
+        try {
+            Session::put('menu', 'Party');
+
+            $data = Party::select([
+                'PartyID',
+                'PartyName',
+                'TRN',
+                'Address',
+                'City',
+                'Phone',
+                'Email'
+            ]);
+
+            return DataTables::of($data)
+
+                ->addColumn('action', function ($row) {
+                    return '
+                        <div class="d-flex gap-1">
+                            <a href="'.url('/PartiesEdit/'.$row->PartyID).'" class="text-secondary">
+                                <i class="mdi mdi-pencil font-size-15"></i>
+                            </a>
+                        </div>
+                    ';
+                })
+
+                ->rawColumns(['action'])
+                ->make(true);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+
     public  function SaveParties(request $request)
     {
         ///////////////////////USER RIGHT & CONTROL ///////////////////////////////////////////
