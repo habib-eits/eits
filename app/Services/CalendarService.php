@@ -53,7 +53,7 @@ class CalendarService
                 'type'           => 'followup',
                 'remarks'        => $f->remarks ?? '',
                 'notes'          => $f->notes ?? '',
-                'allDay'         => false,
+                'allDay'         => true,
 
                 'customer_name'  => $f->lead?->name ?? 'Unknown',
                 'phone'          => $f->lead?->tel ?? 'N/A',
