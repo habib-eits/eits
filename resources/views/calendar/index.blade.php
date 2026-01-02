@@ -1,35 +1,66 @@
-@extends('template.tmp')
-@section('title', $pagetitle)
-@section('content')
+ @extends('template.tmp')
+ @section('title', $pagetitle)
+ @section('content')
 
-    <meta name="csrf-token" content="{{ csrf_token() }}" />
+     <meta name="csrf-token" content="{{ csrf_token() }}" />
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.css" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.9.0/fullcalendar.css" />
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.9.0/fullcalendar.js"></script>
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
+     <div class="main-content">
+         <div class="page-content">
+             <div class="container-fluid">
 
-    <div class="main-content">
-        <div class="page-content">
-            <div class="container-fluid">
+                 <script>
+                     @if (session('success'))
+                         toastr.success("{{ session('success') }}");
+                     @endif
+                     @if (session('error'))
+                         toastr.error("{{ session('error') }}");
+                     @endif
+                 </script>
 
-                <script>
-                    @if (session('success'))
-                        toastr.success("{{ session('success') }}");
-                    @endif
-                    @if (session('error'))
-                        toastr.error("{{ session('error') }}");
-                    @endif
-                </script>
+                 @if (isset($agents) && count($agents) > 0 && session('UserType') == 'Admin')
+                     <div class="row mb-3">
+                         <div class="col-md-3">
+                             <label for="agent_filter"><strong>Filter by Agent</strong></label>
+                             <select name="agent_filter" id="agent_filter" class="form-control select2">
+                                 <option value="">All Agents</option>
+                                 <option value="-1">No Agent</option>
+                                 @foreach ($agents as $agent)
+                                     <option value="{{ $agent->id }}">{{ $agent->name }}</option>
+                                 @endforeach
+                             </select>
+                         </div>
+                     </div>
 
-                <div id="calendar"></div>
-            </div>
-        </div>
-    </div>
+                     <!-- Agent Color Legend -->
+                     <div class="col-md-9 mt-4 mb-3">
+                         <strong>Agent Colors:</strong>
+                         <div class="d-flex flex-wrap gap-3 mt-2">
+                             @foreach ($agents as $agent)
+                                 <div class="d-flex align-items-center">
+                                     <div class="rounded me-2"
+                                         style="width: 20px; height: 20px; background-color: {{ $agentColors[$agent->id] }};">
+                                     </div>
+                                     <small>{{ $agent->name }}</small>
+                                 </div>
+                             @endforeach
+                         </div>
+                     </div>
+                 @endif
 
-    @include('calendar.partials.followup-edit-modal')
+                 <div id="calendar"></div>
+                 
+             </div>
+         </div>
+     </div>
 
-@endsection
+     @include('calendar.partials.followup-edit-modal')
+
+ @endsection

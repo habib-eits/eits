@@ -26,8 +26,7 @@ class FollowupUpdateRequest extends FormRequest
         return [
             'date'    => 'required|date',                 
             'remarks' => 'required|string|max:1000',         
-            'notes'   => 'required|string|max:1000',         
-            'status'  => 'required|in:Pending,Done',
+            'notes'   => 'required|string|max:1000',
         ];
     }
 }

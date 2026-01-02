@@ -2,57 +2,53 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\FollowupUpdateRequest;
+use Session;
 use App\Models\Followup;
+use App\Services\CalendarService;
+use Illuminate\Support\Facades\DB;
+use App\Http\Requests\FollowupUpdateRequest;
 
 class CalendarController extends Controller
 {
+    protected $calendarService;
+
+    public function __construct(CalendarService $calendarService)
+    {
+        $this->calendarService = $calendarService;
+    }
+
     public function index()
     {
         $pagetitle = 'Calendar';
-        return view('calendar.index', compact('pagetitle'));
-    }
+        $agents = DB::table('user')
+            ->where('UserType', 'Agent')
+            ->orderBy('name')
+            ->get();
 
+        $agentColors = $agents->mapWithKeys(function ($agent) {
+            return [$agent->id => $this->calendarService->getAgentColor($agent->id)];
+        })->toArray();
+
+        return view('calendar.index', compact('pagetitle', 'agents', 'agentColors'));
+    }
 
     public function ajax_followup()
     {
-        $query = Followup::with(['lead.branch', 'lead.branchService'])
-            ->whereNotNull('date');
+        $events = $this->calendarService->getFollowupEvents();
 
-        if ($start = request('start')) {
-            $query->whereDate('date', '>=', substr($start, 0, 10));
-        }
-        if ($end = request('end')) {
-            $query->whereDate('date', '<=', substr($end, 0, 10));
-        }
-
-        return response()->json(
-            $query->get()->map(fn($f) => [
-                'id'           => 'followup_' . $f->id,
-                'title'        => $f->remarks ? substr($f->remarks, 0, 50) : 'Follow-up',
-                'start'        => $f->date,
-                'end'          => $f->date,
-                'color'        => $f->status === 'Done' ? '#28a745' : '#ff9800',
-                'type'         => 'followup',
-                'remarks'      => $f->remarks ?? '',
-                'notes'        => $f->notes ?? '',
-                'status'       => $f->status ?? 'Pending',
-
-                // Lead Info for Modal
-                'customer_name' => $f->lead?->name ?? 'Unknown',
-                'phone'          => $f->lead?->tel ?? 'N/A',
-                'branch'       => $f->lead?->branch?->name ?? 'N/A',
-                'service'      => $f->lead?->branchService?->name ?? 'N/A',
-                'allDay'       => true,
-            ])
-        );
+        return response()->json($events);
     }
 
     public function updateFollowup(FollowupUpdateRequest $request, $id)
     {
         $followup = Followup::findOrFail($id);
 
-        $followup->update($request->validated());
+        // Update only date, remarks, and notes (no status)
+        $followup->update([
+            'date' => $request->date,
+            'remarks' => $request->remarks,
+            'notes' => $request->notes,
+        ]);
 
         return response()->json([
             'message' => 'Follow-up updated successfully!'

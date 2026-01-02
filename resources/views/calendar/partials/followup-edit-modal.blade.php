@@ -24,9 +24,13 @@
                         <strong>Branch:</strong>
                         <span id="f_branch" class="text-dark ms-2">-</span>
                     </div>
-                    <div class="mb-0">
+                    <div class="mb-2">
                         <strong>Service:</strong>
                         <span id="f_service" class="text-dark ms-2">-</span>
+                    </div>
+                    <div class="mb-0">
+                        <strong>Agent:</strong>
+                        <span id="f_agent" class="text-dark ms-2">-</span>
                     </div>
                 </div>
             </div>
@@ -44,13 +48,6 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold">Notes</label>
                         <textarea class="form-control" id="f_notes" rows="3" placeholder="Internal notes..."></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Status</label>
-                        <select class="form-select" id="f_status">
-                            <option value="Pending">Pending</option>
-                            <option value="Done">Done</option>
-                        </select>
                     </div>
                 </div>
 
@@ -76,13 +73,26 @@
             }
         });
 
-        $('#calendar').fullCalendar({
+        var calendar = $('#calendar').fullCalendar({
             header: {
                 left: 'prev,next today',
                 center: 'title',
                 right: 'month,agendaWeek,agendaDay,listWeek'
             },
-            events: "{{ url('/ajax_followup') }}",
+            events: function(start, end, timezone, callback) {
+                $.ajax({
+                    url: "{{ url('/ajax_followup') }}",
+                    type: 'GET',
+                    data: {
+                        start: start.format('YYYY-MM-DD'),
+                        end: end.format('YYYY-MM-DD'),
+                        agent_id: $('#agent_filter').val() || ''
+                    },
+                    success: function(events) {
+                        callback(events);
+                    }
+                });
+            },
             timezone: 'local',
             minTime: '06:00:00',
             maxTime: '22:00:00',
@@ -96,13 +106,13 @@
                 $('#f_date').val(formattedDate);
                 $('#f_remarks').val(event.remarks || '');
                 $('#f_notes').val(event.notes || '');
-                $('#f_status').val(event.status || 'Pending');
 
                 // Fill top info panel
                 $('#f_customer_name').text(event.customer_name);
                 $('#f_phone').text(event.phone);
                 $('#f_branch').text(event.branch);
                 $('#f_service').text(event.service);
+                $('#f_agent').text(event.agent_name);
 
                 $('#followupModal').modal('show');
             }
@@ -116,8 +126,7 @@
             const data = {
                 date: $('#f_date').val(), // YYYY-MM-DD directly
                 remarks: $('#f_remarks').val(),
-                notes: $('#f_notes').val(),
-                status: $('#f_status').val()
+                notes: $('#f_notes').val()
             };
 
             $.ajax({
@@ -128,25 +137,8 @@
                     toastr.success(res.message);
                     $('#followupModal').modal('hide');
 
-                    // Update event
-                    const calEvent = $('#calendar').fullCalendar('clientEvents',
-                        'followup_' + id)[0];
-                    if (calEvent) {
-                        const newDate = data.date +
-                            ' 00:00:00'; // Convert YYYY-MM-DD → YYYY-MM-DD 00:00:00
-                        calEvent.start = newDate;
-                        calEvent.end = newDate;
-                        calEvent.start = newDate;
-                        calEvent.end = newDate;
-                        calEvent.title = data.remarks ? data.remarks.substring(0, 50) :
-                            'Follow-up';
-                        calEvent.color = data.status === 'Done' ? '#28a745' : '#ff9800';
-                        calEvent.remarks = data.remarks;
-                        calEvent.notes = data.notes;
-                        calEvent.status = data.status;
-
-                        $('#calendar').fullCalendar('updateEvent', calEvent);
-                    }
+                    // Reload calendar to get updated data
+                    $('#calendar').fullCalendar('refetchEvents');
                 },
                 error: function(xhr) {
                     let msg = 'Failed to update';
@@ -157,6 +149,11 @@
                     toastr.error(msg);
                 }
             });
+        });
+
+        // Reload calendar when agent filter changes
+        $('#agent_filter').on('change', function() {
+            $('#calendar').fullCalendar('refetchEvents');
         });
     });
 </script>
