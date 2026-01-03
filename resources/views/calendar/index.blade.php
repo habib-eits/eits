@@ -31,7 +31,6 @@
                              <label for="agent_filter"><strong>Filter by Agent</strong></label>
                              <select name="agent_filter" id="agent_filter" class="form-control select2">
                                  <option value="">All Agents</option>
-                                 <option value="-1">No Agent</option>
                                  @foreach ($agents as $agent)
                                      <option value="{{ $agent->id }}">{{ $agent->name }}</option>
                                  @endforeach
@@ -56,7 +55,7 @@
                  @endif
 
                  <div id="calendar"></div>
-                 
+
              </div>
          </div>
      </div>
